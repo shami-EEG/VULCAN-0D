@@ -36,6 +36,12 @@ try:
         species2 = data2['variable']['species']
 except NameError: pass
 
+###
+# data['variable']['t_time'] is a 1D list storing the integration time (length = # of steps)
+# np.array(data['variable']['y_time']) is a 3D np array storing the number density of each species (in the shape of (# of steps, 1, # of species))
+# the index of the species is stored in data['variable']['species']
+###
+
 color_index = 0
 for sp in plot_spec:
     if sp in tex_labels: sp_lab = tex_labels[sp]
