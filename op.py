@@ -223,7 +223,7 @@ class ReadRate(object):
     
     def read_rate_venot(self, var, atm, build_table=False):
         
-        Rf, Rindx, a, n, E, a_inf, n_inf, E_inf, k, k_fun, k_inf, kinf_fun, k_fun_new = \
+        Rf, Rindx, a, n, E, a_inf, n_inf, E_inf, k, k_fun, k_inf, kinf_fun, k_fun_new= \
         var.Rf, var.Rindx, var.a, var.n, var.E, var.a_inf, var.n_inf, var.E_inf, var.k, var.k_fun, var.k_inf,  var.kinf_fun,  var.k_fun_new
         
         i = self.i
@@ -253,10 +253,11 @@ class ReadRate(object):
                 if line.startswith("# irreversible"):
                     special_re = False
                     irrev_re = True # switching to reactions using measured reversed rates               
+                    var.irre_indx = i
                     
                 # skip common lines and blank lines
                 # ========================================================================================
-                if not line.startswith("Troe") and not line.startswith("effi") and not line.startswith("#") and line.strip() and special_re == False: # if not starts
+                if not line.startswith("Troe") and not line.startswith("effi") and not line.startswith("#") and line.strip() and special_re == False and irrev_re == False: # if not starts
    
                     Rf[i] = line.partition('[')[-1].rpartition(']')[0].strip()
                     li = line.partition(']')[-1].strip()
@@ -265,9 +266,6 @@ class ReadRate(object):
                               
                     a[i] = float(columns[0])
                     n[i] = float(columns[1])
-                    
-                    #a[i] = a[i]*300.**(-1*n[i])
-                    
                     E[i] = float(columns[2])
                     
                     if build_table == True:
@@ -276,12 +274,8 @@ class ReadRate(object):
                 
                     # switching to trimolecular reactions (len(columns) > 3 for those with high-P limit rates)   
                     if re_tri == True and re_tri_k0 == False:
-                        print (i)
                         a_inf[i] = float(columns[3])
                         n_inf[i] = float(columns[4])
-                        
-                        #a_inf[i] = a_inf[i]*300.**(-1*n_inf[i])
-                        
                         E_inf[i] = float(columns[5])
                         list_tri.append(i) 
                     
@@ -301,7 +295,7 @@ class ReadRate(object):
         
                         kinf_fun[i] = lambda temp, i=i: a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)
                         k_fun_new[i] = lambda temp, mm, i=i: (a[i] *temp**n[i] * np.exp(-E[i]/temp))/(1 + (a[i] *temp**n[i] * np.exp(-E[i]/temp))*mm/(a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)) ) 
-        
+                       
                         #k[i] = k_fun_new[i](Tco, M)
                         k_inf = a_inf[i] *Tco**n_inf[i] * np.exp(-E_inf[i]/Tco)
                         k[i] = k_fun[i](Tco, M)
@@ -320,12 +314,12 @@ class ReadRate(object):
                  # ========================================================================================  
                 elif line.startswith("Troe"):
                     re_i = i-2 # because i already + 2  
-                    
+
                     # in the form of (A,T3 ,T1 ,T2)
                     troe = "".join(line.split()[1:])
                     var.troe[re_i] = ast.literal_eval(troe)
                     troe_i = var.troe[re_i]
-                    
+
                     # C.5 in Venot 2012
                     # 1D array in the same form as Tco
                     f_cent = (1.-troe_i[0])*np.exp(-Tco/troe_i[1]) + troe_i[0]*np.exp(-Tco/troe_i[2]) + np.exp(-troe_i[3]/Tco)
@@ -369,8 +363,32 @@ class ReadRate(object):
                     
                     i += 2
                 
-                #elif irrev_re == True and line.strip() and not line.startswith("#"):
-                
+                elif irrev_re == True and line.strip() and not line.startswith("#"):
+                    
+                    Rf[i] = line.partition('[')[-1].rpartition(']')[0].strip()
+                    li = line.partition(']')[-1].strip()
+                    columns = li.split()
+                    #Rindx[i] = int(line.partition('[')[0].strip())
+                    print ('Using the irreversible 3-body rates: ' + Rf[i])
+
+                    a[i] = float(columns[0])
+                    n[i] = float(columns[1])
+                    E[i] = float(columns[2])
+                    a_inf[i] = float(columns[3])
+                    n_inf[i] = float(columns[4])
+                    E_inf[i] = float(columns[5])
+                        
+                    # Note: make the defaut i=i
+                    k_fun[i] = lambda temp, mm, i=i: a[i] *temp**n[i] * np.exp(-E[i]/temp)
+
+                    kinf_fun[i] = lambda temp, i=i: a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)
+                    k_fun_new[i] = lambda temp, mm, i=i: (a[i] *temp**n[i] * np.exp(-E[i]/temp))/(1 + (a[i] *temp**n[i] * np.exp(-E[i]/temp))*mm/(a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)) ) 
+                    
+                    k_inf = a_inf[i] *Tco**n_inf[i] * np.exp(-E_inf[i]/Tco)
+                    k[i] = k_fun[i](Tco, M)
+                    k[i] = k[i]/(1 + k[i]*M/k_inf )
+                                    
+                    i += 2
                 
                 
         k_fun.update(k_fun_new)
@@ -413,8 +431,135 @@ class ReadRate(object):
             var.k_fun[i] = lambda temp, mm, i=i: var.k_fun[i-1](temp, mm)/chem_funs.Gibbs(i-1,temp)
             var.k[i] = var.k[i-1]/chem_funs.Gibbs(i-1,Tco)
             
-            if np.any(var.k[i] > 1.e-8): print ('R' + str(i) + ':  ' + str(np.amax(var.k[i])) )
-            if np.any(var.k[i-1] > 1.e-8): print ('R' + str(i-1) + ':  ' + str(np.amax(var.k[i-1])) )
+            #if np.any(var.k[i] > 1.e-8): print ('R' + str(i) + ':  ' + str(np.amax(var.k[i])) )
+            #if np.any(var.k[i-1] > 1.e-8): print ('R' + str(i-1) + ':  ' + str(np.amax(var.k[i-1])) )
+            
+        #print (var.k[var.irre_indx+1])
+        if vulcan_cfg.use_venot_network == True:
+            Rf, a, n, E, a_inf, n_inf, E_inf, k, k_fun, kinf_fun, k_fun_new = var.Rf, var.a, var.n, var.E, var.a_inf, var.n_inf, var.E_inf, var.k, var.k_fun, var.kinf_fun, var.k_fun_new
+            
+            for i in range(var.irre_indx+1,nr+1,2):
+            # reading in the reverse rate
+            
+                if var.Rf[i-1] == 'H + CH3 + M -> M + CH4':
+    
+                    a[i], n[i], E[i] = 1.40e-06, 0, 45700.0
+                    a_inf[i], n_inf[i], E_inf[i] = 2.40e+16, 0, 52790.0
+    
+     
+                    # Note: make the defaut i=i
+                    k_fun[i] = lambda temp, mm, i=i: a[i] *temp**n[i] * np.exp(-E[i]/temp)
+
+                    kinf_fun[i] = lambda temp, i=i: a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)
+                    k_fun_new[i] = lambda temp, mm, i=i: (a[i] *temp**n[i] * np.exp(-E[i]/temp))/(1 + (a[i] *temp**n[i] * np.exp(-E[i]/temp))*mm/(a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)) ) 
+    
+                    k_inf = a_inf[i] *Tco**n_inf[i] * np.exp(-E_inf[i]/Tco)
+                    k[i] = k_fun[i](Tco, atm.M)
+                    k[i] = k[i]/(1 + k[i]*atm.M/k_inf )
+                    
+                    # Troe factor
+                    # in the form of (A,T3 ,T1 ,T2)
+                    var.troe[i] = [6.900e-01, 9.000e+01, 2.210e+03, 1.000e+18]
+                    troe_i = var.troe[i]
+                    
+                    # for Troe
+                    pr_i = k[i]*atm.M/k_inf
+                    
+                    # C.5 in Venot 2012
+                    # 1D array in the same form as Tco
+                    f_cent = (1.-troe_i[0])*np.exp(-Tco/troe_i[1]) + troe_i[0]*np.exp(-Tco/troe_i[2]) + np.exp(-troe_i[3]/Tco)
+                    
+                    # C.3 in Venot 2012 (# nz-long 1D array)
+                    cc = -0.4 - 0.67*np.log10(f_cent)
+                    nn = 0.75 - 1.27*np.log10(f_cent)
+                    dd = 0.14
+                    
+                    # C.2 in Venot 2012 (# nz-long 1D array)
+                    log10_f = np.log10(f_cent) / (1. + ( (np.log10(pr_i)+cc)/(nn-dd*(np.log10(pr_i)+cc)) )**2 )
+                    f_troe = 10**log10_f
+
+                    k[i] *= f_troe
+                
+                elif var.Rf[i-1] == 'CH3 + CH3 + M -> M + C2H6':
+                    a[i], n[i], E[i] = 3.15e25, -0.824E+01, 47100.
+                    a_inf[i], n_inf[i], E_inf[i] = 1.80e21, -0.124E+01, 0.457E+05
+                    
+                    # Note: make the defaut i=i
+                    k_fun[i] = lambda temp, mm, i=i: a[i] *temp**n[i] * np.exp(-E[i]/temp)
+
+                    kinf_fun[i] = lambda temp, i=i: a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)
+                    k_fun_new[i] = lambda temp, mm, i=i: (a[i] *temp**n[i] * np.exp(-E[i]/temp))/(1 + (a[i] *temp**n[i] * np.exp(-E[i]/temp))*mm/(a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)) ) 
+    
+                    k_inf = a_inf[i] *Tco**n_inf[i] * np.exp(-E_inf[i]/Tco)
+                    k[i] = k_fun[i](Tco, atm.M)
+                    k[i] = k[i]/(1 + k[i]*atm.M/k_inf )
+                    
+                    # Troe factor
+                    # in the form of (A,T3 ,T1 ,T2)
+                    var.troe[i] = [0.620E+00, 0.730E+02, 0.118E+04, 0.100E+19]
+                    troe_i = var.troe[i]
+                    
+                    # for Troe
+                    pr_i = k[i]*atm.M/k_inf
+                    
+                    # C.5 in Venot 2012
+                    # 1D array in the same form as Tco
+                    f_cent = (1.-troe_i[0])*np.exp(-Tco/troe_i[1]) + troe_i[0]*np.exp(-Tco/troe_i[2]) + np.exp(-troe_i[3]/Tco)
+                    
+                    # C.3 in Venot 2012 (# nz-long 1D array)
+                    cc = -0.4 - 0.67*np.log10(f_cent)
+                    nn = 0.75 - 1.27*np.log10(f_cent)
+                    dd = 0.14
+                    
+                    # C.2 in Venot 2012 (# nz-long 1D array)
+                    log10_f = np.log10(f_cent) / (1. + ( (np.log10(pr_i)+cc)/(nn-dd*(np.log10(pr_i)+cc)) )**2 )
+                    f_troe = 10**log10_f
+
+                    k[i] *= f_troe
+                    
+                    var.effic[i] = {'O2':4.000e-01,'CO':7.500e-01,'CO2':1.500e+00,'H2O':6.500e+00,'CH4':3.000e+00,'H2':1.000e+00,'N2':4.000e-01,'He':3.500e-01,'NH3':1.000e+00}
+                    k[i] *=  var.effic[i][self.atm_base]
+                
+                elif var.Rf[i-1] == 'OH + OH + M -> M + H2O2 ':
+                    a[i], n[i], E[i] = 6.0777, -0.230E+01, 0.245E+05
+                    a_inf[i], n_inf[i], E_inf[i] = 1987104796332.938, 0.900E+00, 0.245E+05
+                    
+                    # Note: make the defaut i=i
+                    k_fun[i] = lambda temp, mm, i=i: a[i] *temp**n[i] * np.exp(-E[i]/temp)
+
+                    kinf_fun[i] = lambda temp, i=i: a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)
+                    k_fun_new[i] = lambda temp, mm, i=i: (a[i] *temp**n[i] * np.exp(-E[i]/temp))/(1 + (a[i] *temp**n[i] * np.exp(-E[i]/temp))*mm/(a_inf[i] *temp**n_inf[i] * np.exp(-E_inf[i]/temp)) ) 
+    
+                    k_inf = a_inf[i] *Tco**n_inf[i] * np.exp(-E_inf[i]/Tco)
+                    k[i] = k_fun[i](Tco, atm.M)
+                    k[i] = k[i]/(1 + k[i]*atm.M/k_inf )
+                    
+                    # Troe factor
+                    # in the form of (A,T3 ,T1 ,T2)
+                    var.troe[i] = [0.370E+00, 0.100E+01, 0.100E+09, 0.100E+19  ]
+                    troe_i = var.troe[i]
+                    
+                    # for Troe
+                    pr_i = k[i]*atm.M/k_inf
+                    
+                    # C.5 in Venot 2012
+                    # 1D array in the same form as Tco
+                    f_cent = (1.-troe_i[0])*np.exp(-Tco/troe_i[1]) + troe_i[0]*np.exp(-Tco/troe_i[2]) + np.exp(-troe_i[3]/Tco)
+                    
+                    # C.3 in Venot 2012 (# nz-long 1D array)
+                    cc = -0.4 - 0.67*np.log10(f_cent)
+                    nn = 0.75 - 1.27*np.log10(f_cent)
+                    dd = 0.14
+                    
+                    # C.2 in Venot 2012 (# nz-long 1D array)
+                    log10_f = np.log10(f_cent) / (1. + ( (np.log10(pr_i)+cc)/(nn-dd*(np.log10(pr_i)+cc)) )**2 )
+                    f_troe = 10**log10_f
+
+                    k[i] *= f_troe
+                    
+                    var.effic[i] = {'O2':7.900e-01,'CO':1.000e+00,'CO2':1.060e+00,'H2O':5.100e+00,'CH4':1.000e+00,'H2':1.000e+00,'N2':4.400e-01,'He':1.000e+00,'NH3':1.000e+00}
+                    k[i] *=  var.effic[i][self.atm_base]
+                    
         return var
         
     
@@ -814,9 +959,9 @@ class Integration(object):
         '''
         funtion returns TRUE if the convergence condition is satisfied
         '''
-        st_factor, mtol_conv, atol, yconv_cri, slope_cri, yconv_min =\
-         vulcan_cfg.st_factor, vulcan_cfg.mtol_conv, vulcan_cfg.atol, vulcan_cfg.yconv_cri, vulcan_cfg.slope_cri, vulcan_cfg.yconv_min
-        y, ymix, y_time, t_time = var.y.copy(), var.ymix.copy(), var.y_time, var.t_time
+        st_factor, mtol_conv, atol, yconv_cri, slope_cri, yconv_min, slope_min =\
+         vulcan_cfg.st_factor, vulcan_cfg.mtol_conv, vulcan_cfg.atol, vulcan_cfg.yconv_cri, vulcan_cfg.slope_cri, vulcan_cfg.yconv_min, vulcan_cfg.slope_min
+        y, ymix, y_time, t_time = var.y.copy(), var.ymix.copy(), var.y_time, var.t_time 
         count = para.count
         
         #slope_min = min( np.amin(atm.Kzz)/np.amax(0.1*atm.Hp)**2 , 1.e-8)
@@ -833,15 +978,16 @@ class Integration(object):
         longdy[ymix < mtol_conv] = 0
         longdy[y < atol] = 0 
         indx_max = np.nanargmax(longdy[ymix>0]/ymix[ymix>0])
-
+        
         longdy = np.amax( longdy[ymix>0]/ymix[ymix>0] )
         longdydt = longdy/(t_time[-1]-t_time[indx])
         # store longdy and longdydt
         var.longdy, var.longdydt = longdy, longdydt
         
-        if para.count % print_freq==0: print ('from... ' + str(int(indx_max/ni)) + ' , ' + species[indx_max%ni])
-        
-        if (longdy < yconv_cri and longdydt < slope_cri ) and var.aflux_change<vulcan_cfg.flux_cri:  # or longdy < yconv_min and longdydt < slope_min
+        if para.count % print_freq==0: 
+            print ('from ' + np.array(species)[ymix[0]>0][indx_max])
+            
+        if (longdy < yconv_cri and longdydt < slope_cri or longdy < yconv_min and longdydt < slope_min): # and var.aflux_change<vulcan_cfg.flux_cri:  # or longdy < yconv_min and longdydt < slope_min
             return True
         return False
     

@@ -11,13 +11,14 @@ import pickle
 
 
 # Setting the vulcan output file to read in    
-vul_data = 'output/0D_2000K_1e2bar.vul'
-vul_data2 = 'output/wang-0D_2000K_1e-3bar.vul'
+vul_data = 'output/CH2-0D-2000K_1e2bar.vul'
+vul_data2 = 'output/VT19-CH2-0D-2000K_1e2bar.vul'
+vul_data3 = 'output/wang-CH2-0D-2000K_1e2bar.vul'
 
 # Setting the list of species to plot
-plot_spec = ['CH4', 'CO', 'H2O', 'H', "H2",'He']
+plot_spec = ['CH4', 'CO', 'CO2', 'H2O', 'H', 'OH']
 # Setting the output plot filename        
-plot_name = '0D_800K_1e2bar'
+plot_name = 'CH2--0D-2000K_1e2bar'
 
 plot_dir = vulcan_cfg.plot_dir
 colors = ['c','b','g','r','m','y','k','orange','pink','grey','darkred','darkblue','salmon','chocolate','steelblue','plum','hotpink']
@@ -34,30 +35,33 @@ try:
     with open(vul_data2, 'rb') as handle:
         data2 = pickle.load(handle)
         species2 = data2['variable']['species']
+    
+    with open(vul_data3, 'rb') as handle:
+        data3 = pickle.load(handle)
+        species3 = data3['variable']['species']
+        
 except NameError: pass
 
-###
-# data['variable']['t_time'] is a 1D list storing the integration time (length = # of steps)
-# np.array(data['variable']['y_time']) is a 3D np array storing the number density of each species (in the shape of (# of steps, 1, # of species))
-# the index of the species is stored in data['variable']['species']
-###
 
 color_index = 0
 for sp in plot_spec:
     if sp in tex_labels: sp_lab = tex_labels[sp]
     else: sp_lab = sp
-    plt.plot(data['variable']['t_time'], np.array(data['variable']['y_time'])[:,0,species.index(sp)]/float(data['atm']['n_0']),  color=colors[color_index], label=sp_lab) 
+    plt.plot(data['variable']['t_time'], np.array(data['variable']['y_time'])[:,0,species.index(sp)]/float(data['atm']['n_0']),  color=colors[color_index], label=sp_lab, alpha=0.7) 
     
-    try: plt.plot(data2['variable']['t_time'], np.array(data2['variable']['y_time'])[:,0,species2.index(sp)]/float(data['atm']['n_0']),  color=colors[color_index], ls='--') 
+    try: plt.plot(data2['variable']['t_time'], np.array(data2['variable']['y_time'])[:,0,species2.index(sp)]/float(data['atm']['n_0']),  color=colors[color_index], ls='--', alpha=0.8) 
     except NameError: pass
-
+    
+    try: plt.plot(data3['variable']['t_time'], np.array(data3['variable']['y_time'])[:,0,species3.index(sp)]/float(data['atm']['n_0']),  color=colors[color_index], ls='-.', alpha=0.8) 
+    except NameError: pass
+    
     color_index += 1
 
 plt.gca().set_xscale('log')       
 plt.gca().set_yscale('log') 
 #plt.gca().invert_yaxis() 
-#plt.xlim((1.E-12, 1.))
-plt.ylim((1e-22, 2.))
+#plt.xlim((1.E-3, 1.e6))
+plt.ylim((1e-20, 2.))
 plt.legend(frameon=0, prop={'size':13}, loc='best')
 
 plt.xlabel("Time(s)", fontsize=12)

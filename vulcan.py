@@ -60,10 +60,10 @@ import ast
 os.environ["OMP_NUM_THREADS"] = "1"
 
 # no arguments or not setting '-np' (no prepipe) option
-if len(sys.argv) < 2 or sys.argv[1] != '-np': 
+if len(sys.argv) < 2 or sys.argv[1] != '-n': 
     # running prepipe to construch chem_funs.py
     print ('Running prepipe...')
-    os.system('python prepipe.py')
+    os.system('python make_chem_funs.py')
 else: pass
 
 # import VULCAN modules

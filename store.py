@@ -54,6 +54,7 @@ class Variables(object):
         
         # For O. Venot's network
         self.troe, self.effic = {}, {}
+        self.irre_indx = 0 # the reaction index of the start of the irreversible reactions
         
         # the max change of the actinic flux (for convergence)
         # if photochemistry is off, the value remaines 0 for checking convergence

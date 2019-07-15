@@ -9,13 +9,15 @@
 atom_list = ['H', 'O', 'C', 'He'] # For checking element conservation
 
 # ====== Set up paths and filenames for the input and output files  ======
+
 use_venot_network = True # Only True while running Olivia's netowrk
-network = 'thermo/wang_venot_network.txt' 
+
+network = 'thermo/vulcan_venot19_reduced.txt' #ISSI_CHO_network.txt (my network used for the ISSI test) or wang_venot_network.txt 
 gibbs_text = 'thermo/gibbs_text.txt' # all the nasa9 files must be placed in the folder: thermo/NASA9/
 com_file = 'thermo/all_compose_venot.txt' # basic chemistry data (stoichiometric numbers and mass)
 output_dir = 'output/' # output directory
 plot_dir = 'plot/'  # plot directory
-out_name =  '0D_2000K_1e-3bar.vul' # output name  
+out_name =  'wang-CH2-0D-800K_1e-3bar.vul' # output name  
 y_time_freq = 1 # The frequency (every _ steps) to store the calculation
 
 
@@ -32,15 +34,15 @@ N_H = 8.1853E-5
 He_H = 0.09691
 
 ini_mix = 'const_mix'  # The initial abundances
-# Options: 'EQ' -- equilibrium chemistry , 'const_mix' -- prescribed below
-const_mix = {'H':0.9081, 'C':3.632E-4, 'O':7.265E-4, 'He':9.081E-2}
+# Options: 'EQ' -- equilibrium chemistry, 'const_mix' -- prescribed below
+const_mix = {'H2':0.8317, 'CH2':6.653E-4, 'O':1.331E-3, 'He':1.663E-1}
 
 # ====== Reactions to be switched off  ======
 remove_list = []
 
 # ====== Setting up parameters for the 0-D "box" ======
 nz = 1  # always 1 for 0D 
-T_box = 2000. # temperature (K)
+T_box = 800. # temperature (K)
 p_box = 1e3   # pressure (dyne/cm^2)
 # Both T_box and p_box are always kept fixed (even when the total number density changes due to chemical reactions)
 atm_base = 'H2' # The bulk gas: changes the efficeny factor in 3-body reactions in Venot's network
@@ -87,17 +89,17 @@ output_humanread = False
 # update_frq = 100 # for updating dz and dzi due to change of mu
 
 # ====== steady state check ======
-st_factor = 0.9  
+st_factor = 0.05  
 count_min = 100
 
 # ====== Setting up numerical parameters for the ODE solver ====== 
 dttry = 1.E-10  # the initial stepsize (s) 
 #dt_std = 1.     
 trun_min = 1e2
-runtime = 1.E24  # max runtime
+runtime = 1.E26  # max runtime
 count_max = int(5E4)  # max steps
 dt_min = 1.E-14  # min stepsize
-dt_max = runtime*0.01  # mxn stepsize
+dt_max = runtime*1e-5  # mxn stepsize
 dt_var_max = 2.  # max factor of varing the stepsize
 dt_var_min = 0.5  # min factor of varing the stepsize
 atol = 1.e-2   # absolute tolorence
@@ -109,13 +111,14 @@ loss_eps = 1e3 #1e-1
 yconv_cri = 0.01 # for checking steady-state
 slope_cri = 1.e-10
 yconv_min = 0.1
+slope_min = 1.e-12
 
 flux_cri = 5.e-2  #0.1
 flux_atol = 1. # the tol for actinc flux (# photons cm-2 s-1 nm-1)
 
 
 # ====== Setting up numerical parameters for Ros2 ODE solver ====== 
-rtol = 0.1  # the tolorence for the numerical truncation errors. Larger values run faster but might be unstable
+rtol = 0.05  # the tolorence for the numerical truncation errors. Larger values run faster but might be unstable
 # suggested values: 0.01 ~ 0.1 
 
 # ====== Setting up numerical parameters for SemiEu/SparSemiEU ODE solver (Not relavent) ====== 

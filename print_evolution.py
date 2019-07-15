@@ -7,7 +7,7 @@ import pickle
 
 
 # Setting the vulcan output file to read in    
-vul_data = 'output/0D_2000K_1e2bar.vul'
+vul_data = 'output/0D-2000K_1e2bar.vul'
 # Setting the output file name
 output = open('output/ISSI_0D_test4-2000K_1e2bar.txt', "w")
 
