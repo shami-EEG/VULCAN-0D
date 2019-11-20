@@ -1,2 +1,2 @@
 #grid point	p_iterations	c_iterations	p_convergence   	c_convergence   	P (bar)         	T(k)            	n_<H> (cm-3)    	n_g (cm-3)      	m(u)            	C    	H    	He   	N    	O    	P    	S    	Si   	Ti   	V    
-0         	0         	4         	ok              	ok              	1.0000000000e-03	8.0000000000e+02	1.5167441766e+16	9.0537039645e+15	2.3596567373e+00	ok   	ok   	ok   	ok   	ok   	ok   	ok   	ok   	ok   	ok   
+0         	0         	3         	ok              	ok              	1.0000000000e-03	8.0000000000e+02	1.5167441766e+16	9.0537039645e+15	2.3630191561e+00	ok   	ok   	ok   	ok   	ok   	ok   	ok   	ok   	ok   	ok   
