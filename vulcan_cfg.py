@@ -10,14 +10,14 @@ atom_list = ['H', 'O', 'C', 'He'] # For checking element conservation
 
 # ====== Set up paths and filenames for the input and output files  ======
 
-use_venot_network = True # Only True while running Olivia's netowrk
+use_venot_network = False # Only True while running Olivia's netowrk
 
-network = 'thermo/vulcan_venot19_reduced.txt' #ISSI_CHO_network.txt (my network used for the ISSI test) or wang_venot_network.txt 
+network = 'thermo/NCHO_thermo_network.txt' #ISSI_CHO_network.txt (my network used for the ISSI test) or wang_venot_network.txt 
 gibbs_text = 'thermo/gibbs_text.txt' # all the nasa9 files must be placed in the folder: thermo/NASA9/
 com_file = 'thermo/all_compose_venot.txt' # basic chemistry data (stoichiometric numbers and mass)
 output_dir = 'output/' # output directory
 plot_dir = 'plot/'  # plot directory
-out_name =  'wang-CH2-0D-800K_1e-3bar.vul' # output name  
+out_name =  'test.vul' # output name  
 y_time_freq = 1 # The frequency (every _ steps) to store the calculation
 
 
@@ -35,14 +35,14 @@ He_H = 0.09691
 
 ini_mix = 'const_mix'  # The initial abundances
 # Options: 'EQ' -- equilibrium chemistry, 'const_mix' -- prescribed below
-const_mix = {'H2':0.8317, 'CH2':6.653E-4, 'O':1.331E-3, 'He':1.663E-1}
+const_mix = {'H2':0.8317, 'CH4':6.653E-4, 'O':1.331E-3, 'He':1.663E-1}
 
 # ====== Reactions to be switched off  ======
 remove_list = []
 
 # ====== Setting up parameters for the 0-D "box" ======
 nz = 1  # always 1 for 0D 
-T_box = 800. # temperature (K)
+T_box = 1000. # temperature (K)
 p_box = 1e3   # pressure (dyne/cm^2)
 # Both T_box and p_box are always kept fixed (even when the total number density changes due to chemical reactions)
 atm_base = 'H2' # The bulk gas: changes the efficeny factor in 3-body reactions in Venot's network
@@ -50,9 +50,9 @@ atm_base = 'H2' # The bulk gas: changes the efficeny factor in 3-body reactions 
 
 # condensation
 use_condense = False
-condesne_sp = ["H2O"]  
-non_gas_sp = ['H2O_l_s']
-start_conden_time = 1e7
+condesne_sp = []  
+non_gas_sp = []
+start_conden_time = 0
 use_sharks = False
 
 # ====== Setting up the photochemistry (Not relevant for the 0D box wo. photochemistry) ======
