@@ -6,18 +6,18 @@
 # ============================================================================= 
 
 # ====== Setting up the elements included in the network ======
-atom_list = ['H', 'O', 'C', 'He'] # For checking element conservation
+atom_list = ['H', 'O', 'C', 'He', 'N', 'S'] # For checking element conservation
 
 # ====== Set up paths and filenames for the input and output files  ======
 
 use_venot_network = False # Only True while running Olivia's netowrk
 
-network = 'thermo/NCHO_thermo_network.txt' #ISSI_CHO_network.txt (my network used for the ISSI test) or wang_venot_network.txt 
+network = 'thermo/SNCHO_thermal_network_2025.txt' #ISSI_CHO_network.txt (my network used for the ISSI test) or wang_venot_network.txt 
 gibbs_text = 'thermo/gibbs_text.txt' # all the nasa9 files must be placed in the folder: thermo/NASA9/
-com_file = 'thermo/all_compose_venot.txt' # basic chemistry data (stoichiometric numbers and mass)
+com_file = 'thermo/all_compose.txt' # basic chemistry data (stoichiometric numbers and mass)
 output_dir = 'output/' # output directory
 plot_dir = 'plot/'  # plot directory
-out_name =  'test.vul' # output name  
+out_name =  'test-S.vul' # output name  
 y_time_freq = 1 # The frequency (every _ steps) to store the calculation
 
 
@@ -35,7 +35,7 @@ He_H = 0.09691
 
 ini_mix = 'const_mix'  # The initial abundances
 # Options: 'EQ' -- equilibrium chemistry, 'const_mix' -- prescribed below
-const_mix = {'H2':0.8317, 'CH4':6.653E-4, 'O':1.331E-3, 'He':1.663E-1}
+const_mix = {'H2':0.8317, 'CH4':6.653E-4, 'O':1.331E-3, 'He':1.663E-1  ,'H2S': 5e-4, 'N2': 1e-4}
 
 # ====== Reactions to be switched off  ======
 remove_list = []
@@ -97,7 +97,7 @@ dttry = 1.E-10  # the initial stepsize (s)
 #dt_std = 1.     
 trun_min = 1e2
 runtime = 1.E26  # max runtime
-count_max = int(5E4)  # max steps
+count_max = int(1E4)  # max steps
 dt_min = 1.E-14  # min stepsize
 dt_max = runtime*1e-5  # mxn stepsize
 dt_var_max = 2.  # max factor of varing the stepsize
